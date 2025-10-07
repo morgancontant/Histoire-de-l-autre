@@ -277,6 +277,12 @@ function onDevToolsClose() {
 
 setInterval(checkDevTools, 800);
 
+if (isMobile()) {
+  // Ne masque pas automatiquement sur perte de focus mobile (par ex. quand l’utilisateur ouvre le clavier)
+  window.removeEventListener('blur', () => {});
+  window.removeEventListener('focus', () => {});
+}
+
 </script>
 
 </body>
