@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palestine - Histoire de l'autre</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
+      background: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(90deg, #007a3d, #b5121b);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+      animation: slideDown 0.8s ease forwards;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    header h1 {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+      color: #fff;
+    }
+    .btn-retour {
+      padding: 10px 20px;
+      background: #fff;
+      color: #b5121b;
+      font-weight: bold;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    .btn-retour:hover {
+      background: #b5121b;
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    /* Hero */
+    .hero {
+      height: 80vh;
+      background: url('img/palestine.jpg') no-repeat center center / cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      padding: 0 20px;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+    }
+    .hero h2, .hero p {
+      position: relative;
+      z-index: 2;
+      opacity: 0;
+      transform: translateY(50px);
+      animation: fadeInUp 1s ease forwards;
+    }
+    .hero h2 {
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: clamp(2rem, 6vw, 3rem);
+      margin-bottom: 20px;
+      animation-delay: 0.3s;
+      text-shadow: 0 4px 15px rgba(0,0,0,0.7);
+    }
+    .hero p {
+      font-size: clamp(1rem, 3vw, 1.3rem);
+      max-width: 700px;
+      animation-delay: 0.6s;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.6);
+      line-height: 1.6;
+    }
+
+    /* Sections */
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 40px;
+      padding: 60px 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15));
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      color: #b5121b;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+      transform: translateY(50px);
+      opacity: 0;
+      animation: fadeInUp 1s ease forwards;
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .card:hover {
+      transform: translateY(-10px) scale(1.03);
+      box-shadow: 0 25px 40px rgba(0,0,0,0.7);
+    }
+    .card h3 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      margin-bottom: 15px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .card p {
+      font-size: clamp(1rem, 2.5vw, 1.1rem);
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    .card a {
+      display: inline-block;
+      padding: 12px 25px;
+      background: #007a3d;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    .card a:hover {
+      background: #b5121b;
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 30px 15px;
+      background: linear-gradient(90deg, #007a3d, #b5121b);
+      color: #fff;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      letter-spacing: 1px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+      }
+      .btn-retour {
+        margin-top: 10px;
+      }
+      .hero {
+        height: 70vh;
+      }
+      .sections {
+        padding: 40px 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h2 {
+        font-size: 1.8rem;
+      }
+      .hero p {
+        font-size: 1rem;
+      }
+      .card {
+        padding: 25px 20px;
+      }
+      .card a {
+        padding: 10px 20px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Palestine</h1>
+    <a href="accueil.html" class="btn-retour">Retour à l’accueil</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h2>Un récit, une mémoire</h2>
+    <p>Découvrez l’histoire de la Palestine à travers trois approches uniques : l’analyse écrite, la poésie et le dessin.</p>
+  </section>
+
+  <!-- Sections -->
+  <section class="sections">
+    <div class="card" style="animation-delay:0.5s;">
+      <h3>Analyse écrite</h3>
+      <p>Un décryptage historique et critique des événements qui ont marqué la Palestine.</p>
+      <a href="palestine/palestine.html">Lire</a>
+    </div>
+
+    <div class="card" style="animation-delay:0.8s;">
+      <h3>Livre en poème</h3>
+      <p>Une mise en mots poétique de l’histoire, entre mémoire et émotion.</p>
+      <a href="peome/poeme.html">Découvrir</a>
+    </div>
+
+    <div class="card" style="animation-delay:1.1s;">
+      <h3>Dessin</h3>
+      <p>Des illustrations et croquis qui traduisent la mémoire collective en images.</p>
+      <a href="dessin/dessin.html">Voir</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 Histoire de l’autre | Palestine
+  </footer>
+</body>
+</html>

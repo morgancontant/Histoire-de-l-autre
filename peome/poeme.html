@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>PDF - Protection basique</title>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg,
+      #0038a8 0%,   /* Bleu Israël */
+      #00a8ff 25%,  /* Bleu clair Israël */
+      #007a3d 60%,  /* Vert Palestine */
+      #b5121b 100%  /* Rouge Palestine */
+    );
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #fff;
+  }
+
+  header {
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(5px);
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 16px;
+        text-transform: uppercase;
+  }
+
+  #pdf-container {
+    padding: 18px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  canvas {
+    display: block;
+    margin: 18px auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+
+   .textLayer {
+    display: none !important;
+  }
+
+  #shield {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    text-align: center;
+    padding: 20px;
+  }
+  button {
+    cursor: pointer;
+    padding: 12px 25px;
+    border-radius: 6px;
+    border: 0;
+    background: #fff;
+    color: #333;
+    font-weight: bold;
+    border-radius: 12px;
+    border: none;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    cursor: pointer;
+
+  }
+
+  button:hover {
+    background: #0038a8;
+    color: #fff;
+    transform: scale(1.1);
+  }
+</style>
+</head>
+<body class="no-select">
+<header>
+  <h1>Document — Poème</h1>
+  <div>
+    <button id="back-btn">⬅ Retour</button>
+  </div>
+</header>
+
+<div id="pdf-container" aria-live="polite"></div>
+
+<!-- écran noir de protection -->
+<div id="shield">Affichage masqué pour protection — veuillez fermer les outils développeur / console pour revoir le document.</div>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ========== CONFIG ========== */
+const PDF_URL = 'Et la terre a tremblé.pdf'; // ton PDF
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const container = document.getElementById('pdf-container');
+const shield = document.getElementById('shield');
+const backBtn = document.getElementById('back-btn');
+
+/* ========== RENDU PDF SUR CANVAS (texte non-sélectionnable) ========== */
+(async function renderPdf() {
+  try {
+    const pdf = await pdfjsLib.getDocument(PDF_URL).promise;
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const scale = 1.3;
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      canvas.style.maxWidth = '100%';
+      canvas.setAttribute('data-page', pageNum);
+      canvas.setAttribute('draggable', 'false');
+
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      // Empêcher drag / clic droit
+      canvas.addEventListener('dragstart', e => e.preventDefault());
+      canvas.addEventListener('contextmenu', e => e.preventDefault());
+      canvas.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
+
+      container.appendChild(canvas);
+    }
+  } catch (err) {
+    console.error('Erreur chargement PDF:', err);
+    container.innerHTML = '<div style="color:red">Impossible de charger le PDF. Vérifie le chemin et lance via HTTP.</div>';
+  }
+})();
+
+/* ========== BOUTON RETOUR ========== */
+backBtn.addEventListener('click', () => {
+  if (history.length > 1) history.back();
+  else window.location.href = '';
+});
+
+/* ========== BLOQUER ACTIONS ========== */
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('dragstart', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
+  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
+  if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) { e.preventDefault(); return false; }
+  if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); return false; }
+});
+
+/* ========== DÉTECTION DEVTOOLS ========== */
+let devtoolsOpen = false;
+function checkDevTools() {
+  const threshold = 160;
+  const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+  const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+  if (widthDiff > threshold || heightDiff > threshold) {
+    if (!devtoolsOpen) { devtoolsOpen = true; onDevToolsOpen(); }
+  } else {
+    if (devtoolsOpen) { devtoolsOpen = false; onDevToolsClose(); }
+  }
+}
+function onDevToolsOpen() { shield.style.display = 'flex'; }
+function onDevToolsClose() { shield.style.display = 'none'; }
+setInterval(checkDevTools, 500);
+
+console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
+</script>
+
+<script>
+/* =========================
+   PROTECTIONS SUPPLÉMENTAIRES
+   ========================= */
+
+// Masque le PDF si la fenêtre perd le focus (ex. tentative de capture)
+window.addEventListener('blur', () => {
+  shield.style.display = 'flex';
+  shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+});
+
+// Réaffiche le PDF quand la fenêtre revient au premier plan
+window.addEventListener('focus', () => {
+  shield.style.display = 'none';
+});
+
+// Détection de tentative de capture clavier
+document.addEventListener('keydown', e => {
+  // Windows + Shift + S
+  if (e.key === 'S' && e.shiftKey && e.metaKey === false && e.ctrlKey === false) {
+    e.preventDefault();
+    alert('Capture d’écran bloquée.');
+    return false;
+  }
+
+  // Print Screen (certains navigateurs)
+  if (e.key === 'PrintScreen') {
+    e.preventDefault();
+    shield.style.display = 'flex';
+    shield.innerHTML = 'Capture d’écran détectée et bloquée.';
+    setTimeout(() => shield.style.display = 'none', 3000);
+  }
+});
+
+// Tentative d'ouverture d'outil de capture (visibilité du document)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    shield.style.display = 'flex';
+    shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+  } else {
+    shield.style.display = 'none';
+  }
+});
+</script>
+
+</body>
+</html>
