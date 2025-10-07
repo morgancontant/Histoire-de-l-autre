@@ -238,16 +238,44 @@ document.addEventListener('visibilitychange', () => {
 function isMobile() {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
 }
-// Désactive totalement l’écran noir sur mobile
-if (isMobile()) {
-  console.log("Mode mobile détecté — protection visuelle désactivée.");
-  shield.style.display = "none";
 
-  // Neutralise les écoutes liées à la protection visuelle
-  window.addEventListener = () => {};
-  document.addEventListener = () => {};
+function checkDevTools() {
+  // Si on est sur mobile, on ne bloque jamais
+  if (isMobile()) {
+    if (devtoolsOpen) { 
+      devtoolsOpen = false; 
+      onDevToolsClose(); 
+    }
+    return;
+  }
+
+  const threshold = 160;
+  const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+  const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+
+  if (widthDiff > threshold || heightDiff > threshold) {
+    if (!devtoolsOpen) {
+      devtoolsOpen = true;
+      onDevToolsOpen();
+    }
+  } else {
+    if (devtoolsOpen) {
+      devtoolsOpen = false;
+      onDevToolsClose();
+    }
+  }
 }
 
+function onDevToolsOpen() {
+  shield.style.display = 'flex';
+  shield.innerHTML = 'Affichage masqué pour protection — veuillez fermer les outils développeur / console.';
+}
+
+function onDevToolsClose() {
+  shield.style.display = 'none';
+}
+
+setInterval(checkDevTools, 800);
 
 </script>
 
