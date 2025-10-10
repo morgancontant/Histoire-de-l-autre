@@ -237,44 +237,72 @@ window.addEventListener('blur', () => {
   shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
 });
 
-// Réaffiche le PDF quand la fenêtre revient au premier plan
-window.addEventListener('focus', () => {
-  shield.style.display = 'none';
-});
+/* ===== Protections (uniquement PC) ===== */
+if (!isMobile) {
+  // Blocage clic droit & drag
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
 
-// Détection de tentative de capture clavier
-document.addEventListener('keydown', e => {
-  // Windows + Shift + S
-  if (e.key === 'S' && e.shiftKey && e.metaKey === false && e.ctrlKey === false) {
-    e.preventDefault();
-    alert('Capture d’écran bloquée.');
-    return false;
+  // Blocage raccourcis clavier
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12') return e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) return e.preventDefault();
+    if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) return e.preventDefault();
+    if (e.ctrlKey && ['a','A'].includes(e.key)) return e.preventDefault();
+  });
+
+  // Détection DevTools
+  let devtoolsOpen = false;
+  function checkDevTools() {
+    const threshold = 160;
+    const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+    const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+    if (widthDiff > threshold || heightDiff > threshold) {
+      if (!devtoolsOpen) {
+        devtoolsOpen = true;
+        shield.style.display = 'flex';
+      }
+    } else {
+      if (devtoolsOpen) {
+        devtoolsOpen = false;
+        shield.style.display = 'none';
+      }
+    }
   }
+  setInterval(checkDevTools, 500);
 
-  // Print Screen (certains navigateurs)
-  if (e.key === 'PrintScreen') {
-    e.preventDefault();
-    shield.style.display = 'flex';
-    shield.innerHTML = 'Capture d’écran détectée et bloquée.';
-    setTimeout(() => shield.style.display = 'none', 3000);
-  }
-});
-
-// Tentative d'ouverture d'outil de capture (visibilité du document)
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
+  // Masque si perte de focus
+  window.addEventListener('blur', () => {
     shield.style.display = 'flex';
     shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
-  } else {
-    shield.style.display = 'none';
-  }
+  });
+  window.addEventListener('focus', () => { shield.style.display = 'none'; });
 
+  // Détection capture
+  document.addEventListener('keydown', e => {
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Capture d’écran détectée et bloquée.';
+      setTimeout(() => shield.style.display = 'none', 3000);
+    }
+  });
 
-    // Sur mobile : aucune restriction
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+    } else {
+      shield.style.display = 'none';
+    }
+  });
+
+  console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
+} else {
+  // Sur mobile : aucune restriction
   document.body.classList.remove('no-select');
   shield.style.display = 'none';
-
-});
+}
 
 
 
