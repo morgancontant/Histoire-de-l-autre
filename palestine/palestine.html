@@ -170,12 +170,38 @@ if (!isMobile) {
   document.addEventListener('dragstart', e => e.preventDefault());
 
   // Blocage raccourcis clavier
-  document.addEventListener('keydown', e => {
-    if (e.key === 'F12') return e.preventDefault();
-    if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) return e.preventDefault();
-    if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) return e.preventDefault();
-    if (e.ctrlKey && ['a','A'].includes(e.key)) return e.preventDefault();
-  });
+document.addEventListener('keydown', function(e) {
+  const key = e.key.toLowerCase();
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const isCtrl = e.ctrlKey;
+  const isCmd = e.metaKey; // touche ⌘ sur macOS
+
+  // Bloque F12
+  if (key === 'f12') { e.preventDefault(); e.stopPropagation(); return false; }
+
+  // Bloque DevTools : Ctrl+Shift+I/J/C ou ⌘+Option+I/J/C
+  if ((isCtrl || isCmd) && e.shiftKey && ['i','j','c'].includes(key)) { e.preventDefault(); return false; }
+
+  // Bloque affichage du code source et sauvegarde : Ctrl/⌘ + U, S, P
+  if ((isCtrl || isCmd) && ['u','s','p'].includes(key)) { e.preventDefault(); return false; }
+
+  // Bloque Ctrl+A / ⌘+A (sélection tout)
+  if ((isCtrl || isCmd) && key === 'a') { e.preventDefault(); return false; }
+
+  // Bloque capture (Windows + Shift + S)
+  if (isCtrl && e.shiftKey && key === 's' && !isMac) {
+    e.preventDefault();
+    alert('Capture d’écran bloquée.');
+    return false;
+  }
+
+  // Sur macOS : ⌘+Shift+4 (capture d’écran)
+  if (isCmd && e.shiftKey && key === '4') {
+    e.preventDefault();
+    alert('Capture d’écran bloquée sur macOS.');
+    return false;
+  }
+});
 
   // Détection DevTools
   let devtoolsOpen = false;
