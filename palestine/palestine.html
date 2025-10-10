@@ -120,21 +120,24 @@
 <!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-/* ========== CONFIG ========== */
-const PDF_URL ='Palestine 3.0.pdf'; // Remplace par ton PDF (même dossier)
+/* ===== Détection mobile ===== */
+const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+
+/* ===== Config PDF ===== */
+const PDF_URL = 'Palestine 3.0.pdf';
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 const container = document.getElementById('pdf-container');
 const shield = document.getElementById('shield');
 const backBtn = document.getElementById('back-btn');
 
-/* ========== RENDU PDF SUR CANVAS (texte non-sélectionnable) ========== */
+/* ===== Rendu PDF ===== */
 (async function renderPdf() {
   try {
     const pdf = await pdfjsLib.getDocument(PDF_URL).promise;
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
-      const scale = 1.3;
+      const scale = isMobile ? 1.0 : 1.3;
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
@@ -142,15 +145,9 @@ const backBtn = document.getElementById('back-btn');
       canvas.height = viewport.height;
       canvas.style.maxWidth = '100%';
       canvas.setAttribute('data-page', pageNum);
-      canvas.setAttribute('draggable', 'false');
 
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
-
-      // Empêcher le drag/drop/click droit sur le canvas
-      canvas.addEventListener('dragstart', e => e.preventDefault());
-      canvas.addEventListener('contextmenu', e => e.preventDefault());
-      canvas.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
 
       container.appendChild(canvas);
     }
@@ -160,76 +157,11 @@ const backBtn = document.getElementById('back-btn');
   }
 })();
 
-/* ========== BOUTON RETOUR ========== */
+/* ===== Bouton retour ===== */
 backBtn.addEventListener('click', () => {
   if (history.length > 1) history.back();
   else window.location.href = 'palestine.html';
 });
-
-/* ========== BLOQUER ACTIONS COURANTES (cosmétique) ========== */
-document.addEventListener('contextmenu', e => e.preventDefault()); // clic-droit global
-document.addEventListener('dragstart', e => e.preventDefault());    // empêche drag global
-
-document.addEventListener('keydown', function(e) {
-  // Bloque F12
-  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
-  // Bloque Ctrl+Shift+I / J / C  (devtools)
-  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
-  // Bloque Ctrl+U (view-source), Ctrl+S (save), Ctrl+P (print), Ctrl+Shift+S
-  if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) { e.preventDefault(); return false; }
-  // Bloque Ctrl+A (sélection globale) - pas strictement nécessaire avec canvases mais ajouté
-  if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); return false; }
-});
-
-/* ========== DÉTECTION BASIQUE D'OUTILS DEV (heuristique) ========== */
-let devtoolsOpen = false;
-function checkDevTools() {
-  // heuristique simple : si la différence outerWidth - innerWidth dépasse un seuil, devtools probablement ouvert verticalement
-  const threshold = 160; // ajustable
-  const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
-  const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
-  if (widthDiff > threshold || heightDiff > threshold) {
-    if (!devtoolsOpen) {
-      devtoolsOpen = true;
-      onDevToolsOpen();
-    }
-  } else {
-    if (devtoolsOpen) {
-      devtoolsOpen = false;
-      onDevToolsClose();
-    }
-  }
-}
-function onDevToolsOpen() {
-  // Affiche un écran noir qui recouvre la page
-  shield.style.display = 'flex';
-}
-function onDevToolsClose() {
-  shield.style.display = 'none';
-}
-// check régulièrement (toutes les 500ms)
-setInterval(checkDevTools, 500);
-
-/* ========== Empêche l'accès direct au PDF via "Ctrl+L puis URL" impossible à contrôler - remarque ==========
-   Pour empêcher l'accès direct au fichier TD1.pdf, il faut le protéger côté serveur (authentification, tokens).
-   Ici, côté client on peut seulement rendre plus difficile la copie. 
-*/
-
-/* ========== Info console : affiche message d'avertissement si console ouverte (autre technique) ==========
-   On peut aussi afficher un message dans la console pour dissuader. (Ne bloque pas)
-*/
-console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
-
-/* ========== Nota Bene ==========
-   - Ces mesures sont dissuasives mais contournables.
-   - Pour vrai contrôle : watermark côté serveur, contrôle d'accès (session protectée), ou solution DRM.
-*/
-</script>
-
-<script>
-/* ===== Détection mobile ===== */
-const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
-
 
 /* ===== Protections (uniquement PC) ===== */
 if (!isMobile) {
