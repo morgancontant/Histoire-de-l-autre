@@ -108,21 +108,24 @@
 <!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-/* ========== CONFIG ========== */
-const PDF_URL = 'Et la terre a tremblé.pdf'; // ton PDF
+/* ===== Détection mobile ===== */
+const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+
+/* ===== Config PDF ===== */
+const PDF_URL = 'Et la terre a tremblé.pdf';
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 const container = document.getElementById('pdf-container');
 const shield = document.getElementById('shield');
 const backBtn = document.getElementById('back-btn');
 
-/* ========== RENDU PDF SUR CANVAS (texte non-sélectionnable) ========== */
+/* ===== Rendu PDF ===== */
 (async function renderPdf() {
   try {
     const pdf = await pdfjsLib.getDocument(PDF_URL).promise;
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
-      const scale = 1.3;
+      const scale = isMobile ? 1.0 : 1.3;
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
@@ -130,15 +133,9 @@ const backBtn = document.getElementById('back-btn');
       canvas.height = viewport.height;
       canvas.style.maxWidth = '100%';
       canvas.setAttribute('data-page', pageNum);
-      canvas.setAttribute('draggable', 'false');
 
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
-
-      // Empêcher drag / clic droit
-      canvas.addEventListener('dragstart', e => e.preventDefault());
-      canvas.addEventListener('contextmenu', e => e.preventDefault());
-      canvas.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
 
       container.appendChild(canvas);
     }
@@ -148,85 +145,104 @@ const backBtn = document.getElementById('back-btn');
   }
 })();
 
-/* ========== BOUTON RETOUR ========== */
+/* ===== Bouton retour ===== */
 backBtn.addEventListener('click', () => {
   if (history.length > 1) history.back();
   else window.location.href = '';
 });
 
-/* ========== BLOQUER ACTIONS ========== */
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('dragstart', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
-  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
-  if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) { e.preventDefault(); return false; }
-  if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); return false; }
-});
+/* ===== Protections (uniquement PC) ===== */
+if (!isMobile) {
+  // Blocage clic droit & drag
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
 
-/* ========== DÉTECTION DEVTOOLS ========== */
-let devtoolsOpen = false;
-function checkDevTools() {
-  const threshold = 160;
-  const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
-  const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
-  if (widthDiff > threshold || heightDiff > threshold) {
-    if (!devtoolsOpen) { devtoolsOpen = true; onDevToolsOpen(); }
-  } else {
-    if (devtoolsOpen) { devtoolsOpen = false; onDevToolsClose(); }
-  }
-}
-function onDevToolsOpen() { shield.style.display = 'flex'; }
-function onDevToolsClose() { shield.style.display = 'none'; }
-setInterval(checkDevTools, 500);
+  // Blocage raccourcis clavier
+document.addEventListener('keydown', function(e) {
+  const key = e.key.toLowerCase();
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const isCtrl = e.ctrlKey;
+  const isCmd = e.metaKey; // touche ⌘ sur macOS
 
-console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
-</script>
+  // Bloque F12
+  if (key === 'f12') { e.preventDefault(); e.stopPropagation(); return false; }
 
-<script>
-/* =========================
-   PROTECTIONS SUPPLÉMENTAIRES
-   ========================= */
+  // Bloque DevTools : Ctrl+Shift+I/J/C ou ⌘+Option+I/J/C
+  if ((isCtrl || isCmd) && e.shiftKey && ['i','j','c'].includes(key)) { e.preventDefault(); return false; }
 
-// Masque le PDF si la fenêtre perd le focus (ex. tentative de capture)
-window.addEventListener('blur', () => {
-  shield.style.display = 'flex';
-  shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
-});
+  // Bloque affichage du code source et sauvegarde : Ctrl/⌘ + U, S, P
+  if ((isCtrl || isCmd) && ['u','s','p'].includes(key)) { e.preventDefault(); return false; }
 
-// Réaffiche le PDF quand la fenêtre revient au premier plan
-window.addEventListener('focus', () => {
-  shield.style.display = 'none';
-});
+  // Bloque Ctrl+A / ⌘+A (sélection tout)
+  if ((isCtrl || isCmd) && key === 'a') { e.preventDefault(); return false; }
 
-// Détection de tentative de capture clavier
-document.addEventListener('keydown', e => {
-  // Windows + Shift + S
-  if (e.key === 'S' && e.shiftKey && e.metaKey === false && e.ctrlKey === false) {
+  // Bloque capture (Windows + Shift + S)
+  if (isCtrl && e.shiftKey && key === 's' && !isMac) {
     e.preventDefault();
     alert('Capture d’écran bloquée.');
     return false;
   }
 
-  // Print Screen (certains navigateurs)
-  if (e.key === 'PrintScreen') {
+  // Sur macOS : ⌘+Shift+4 (capture d’écran)
+  if (isCmd && e.shiftKey && key === '4') {
     e.preventDefault();
-    shield.style.display = 'flex';
-    shield.innerHTML = 'Capture d’écran détectée et bloquée.';
-    setTimeout(() => shield.style.display = 'none', 3000);
+    alert('Capture d’écran bloquée sur macOS.');
+    return false;
   }
 });
 
-// Tentative d'ouverture d'outil de capture (visibilité du document)
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
+  // Détection DevTools
+  let devtoolsOpen = false;
+  function checkDevTools() {
+    const threshold = 160;
+    const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+    const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+    if (widthDiff > threshold || heightDiff > threshold) {
+      if (!devtoolsOpen) {
+        devtoolsOpen = true;
+        shield.style.display = 'flex';
+      }
+    } else {
+      if (devtoolsOpen) {
+        devtoolsOpen = false;
+        shield.style.display = 'none';
+      }
+    }
+  }
+  setInterval(checkDevTools, 500);
+
+  // Masque si perte de focus
+  window.addEventListener('blur', () => {
     shield.style.display = 'flex';
     shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
-  } else {
-    shield.style.display = 'none';
-  }
-});
-</script>
+  });
+  window.addEventListener('focus', () => { shield.style.display = 'none'; });
 
+  // Détection capture
+  document.addEventListener('keydown', e => {
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Capture d’écran détectée et bloquée.';
+      setTimeout(() => shield.style.display = 'none', 3000);
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+    } else {
+      shield.style.display = 'none';
+    }
+  });
+
+  console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
+} else {
+  // Sur mobile : aucune restriction
+  document.body.classList.remove('no-select');
+  shield.style.display = 'none';
+}
+</script>
 </body>
 </html>
