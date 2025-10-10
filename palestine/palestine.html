@@ -268,7 +268,16 @@ document.addEventListener('visibilitychange', () => {
   } else {
     shield.style.display = 'none';
   }
+
+
+    // Sur mobile : aucune restriction
+  document.body.classList.remove('no-select');
+  shield.style.display = 'none';
+
 });
+
+
+
 </script>
 
 </body>
