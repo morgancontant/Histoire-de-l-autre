@@ -160,70 +160,78 @@ const backBtn = document.getElementById('back-btn');
   }
 })();
 
-/* ========== BOUTON RETOUR ========== */
+/* ===== Bouton retour ===== */
 backBtn.addEventListener('click', () => {
   if (history.length > 1) history.back();
   else window.location.href = 'palestine.html';
 });
 
-/* ========== BLOQUER ACTIONS COURANTES (cosmétique) ========== */
-document.addEventListener('contextmenu', e => e.preventDefault()); // clic-droit global
-document.addEventListener('dragstart', e => e.preventDefault());    // empêche drag global
+/* ===== Protections (uniquement PC) ===== */
+if (!isMobile) {
+  // Blocage clic droit & drag
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dragstart', e => e.preventDefault());
 
-document.addEventListener('keydown', function(e) {
-  // Bloque F12
-  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
-  // Bloque Ctrl+Shift+I / J / C  (devtools)
-  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
-  // Bloque Ctrl+U (view-source), Ctrl+S (save), Ctrl+P (print), Ctrl+Shift+S
-  if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) { e.preventDefault(); return false; }
-  // Bloque Ctrl+A (sélection globale) - pas strictement nécessaire avec canvases mais ajouté
-  if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); return false; }
-});
+  // Blocage raccourcis clavier
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12') return e.preventDefault();
+    if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) return e.preventDefault();
+    if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) return e.preventDefault();
+    if (e.ctrlKey && ['a','A'].includes(e.key)) return e.preventDefault();
+  });
 
-/* ========== DÉTECTION BASIQUE D'OUTILS DEV (heuristique) ========== */
-let devtoolsOpen = false;
-function checkDevTools() {
-  // heuristique simple : si la différence outerWidth - innerWidth dépasse un seuil, devtools probablement ouvert verticalement
-  const threshold = 160; // ajustable
-  const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
-  const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
-  if (widthDiff > threshold || heightDiff > threshold) {
-    if (!devtoolsOpen) {
-      devtoolsOpen = true;
-      onDevToolsOpen();
-    }
-  } else {
-    if (devtoolsOpen) {
-      devtoolsOpen = false;
-      onDevToolsClose();
+  // Détection DevTools
+  let devtoolsOpen = false;
+  function checkDevTools() {
+    const threshold = 160;
+    const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+    const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+    if (widthDiff > threshold || heightDiff > threshold) {
+      if (!devtoolsOpen) {
+        devtoolsOpen = true;
+        shield.style.display = 'flex';
+      }
+    } else {
+      if (devtoolsOpen) {
+        devtoolsOpen = false;
+        shield.style.display = 'none';
+      }
     }
   }
-}
-function onDevToolsOpen() {
-  // Affiche un écran noir qui recouvre la page
-  shield.style.display = 'flex';
-}
-function onDevToolsClose() {
+  setInterval(checkDevTools, 500);
+
+  // Masque si perte de focus
+  window.addEventListener('blur', () => {
+    shield.style.display = 'flex';
+    shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+  });
+  window.addEventListener('focus', () => { shield.style.display = 'none'; });
+
+  // Détection capture
+  document.addEventListener('keydown', e => {
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Capture d’écran détectée et bloquée.';
+      setTimeout(() => shield.style.display = 'none', 3000);
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      shield.style.display = 'flex';
+      shield.innerHTML = 'Affichage masqué pour protection — veuillez revenir sur la page.';
+    } else {
+      shield.style.display = 'none';
+    }
+  });
+
+  console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
+} else {
+  // Sur mobile : aucune restriction
+  document.body.classList.remove('no-select');
   shield.style.display = 'none';
 }
-// check régulièrement (toutes les 500ms)
-setInterval(checkDevTools, 500);
-
-/* ========== Empêche l'accès direct au PDF via "Ctrl+L puis URL" impossible à contrôler - remarque ==========
-   Pour empêcher l'accès direct au fichier TD1.pdf, il faut le protéger côté serveur (authentification, tokens).
-   Ici, côté client on peut seulement rendre plus difficile la copie. 
-*/
-
-/* ========== Info console : affiche message d'avertissement si console ouverte (autre technique) ==========
-   On peut aussi afficher un message dans la console pour dissuader. (Ne bloque pas)
-*/
-console.log('%cAttention : ouverture de la console peut entraîner le masquage du document.', 'background:#222;color:#bada55;padding:6px;border-radius:4px');
-
-/* ========== Nota Bene ==========
-   - Ces mesures sont dissuasives mais contournables.
-   - Pour vrai contrôle : watermark côté serveur, contrôle d'accès (session protectée), ou solution DRM.
-*/
 </script>
 
 <script>
