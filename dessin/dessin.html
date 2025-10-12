@@ -32,39 +32,30 @@ header {
 header h1 {
   margin: 0;
   font-size: 16px;
-      text-transform: uppercase;
+  text-transform: uppercase;
 }
 
 #image-container {
-  padding: 18px;
-  max-width: 1100px;
+  padding: 40px 18px;
+  max-width: 1200px;
   margin: 0 auto;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px; /* espace entre les deux images */
+  flex-wrap: wrap; /* permet le passage à la ligne sur petits écrans */
 }
 
-#image-container img {
-  display: block;
-  margin: 18px auto;
+.image {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  max-width: 100%;
-  max-height: 80vh;
+  max-width: 45%; /* les deux tiennent côte à côte */
   height: auto;
   border-radius: 8px;
+  transition: transform 0.4s ease;
 }
 
-#shield {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #fff;
-  z-index: 99999;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  text-align: center;
-  padding: 20px;
-  display: flex;
+.image:hover {
+  transform: scale(1.03);
 }
 
 button {
@@ -89,8 +80,6 @@ button:hover {
 </head>
 <body>
 
-<div class="overlay"></div>
-
 <header>
   <h1>Document — Dessin</h1>
   <button id="back-btn">⬅ Retour</button>
@@ -99,19 +88,27 @@ button:hover {
 <main id="image-container"></main>
 
 <script>
-const IMAGE_URL = 'Dessin.jpg'; // ton image
 const container = document.getElementById('image-container');
-const shield = document.getElementById('shield');
 const backBtn = document.getElementById('back-btn');
 
-// Afficher l'image
-const img = document.createElement('img');
-img.src = IMAGE_URL;
-img.setAttribute('draggable', 'false');
-img.addEventListener('dragstart', e => e.preventDefault());
-img.addEventListener('contextmenu', e => e.preventDefault());
-img.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
-container.appendChild(img);
+// Liste des images à afficher côte à côte
+const images = ['Dessin.jpg', 'image0.png'];
+
+images.forEach(src => {
+  const img = document.createElement('img');
+  img.src = src;
+  img.classList.add('image');
+  img.setAttribute('draggable', 'false');
+  img.addEventListener('dragstart', e => e.preventDefault());
+  img.addEventListener('contextmenu', e => e.preventDefault());
+  img.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
+  container.appendChild(img);
+  // Réduire une image spécifique
+  if (src === 'Dessin.jpg') {
+    img.style.maxWidth = '32%'; // Taille personnalisée
+  }
+
+});
 
 // Bouton retour
 backBtn.addEventListener('click', () => {
@@ -119,17 +116,14 @@ backBtn.addEventListener('click', () => {
   else window.location.href = '';
 });
 
-// Bloquer actions
+// Bloquer actions indésirables
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('dragstart', e => e.preventDefault());
 document.addEventListener('keydown', e => {
-  if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
+  if (e.key === 'F12') { e.preventDefault(); return false; }
   if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
-  if (e.ctrlKey && ['u','U','s','S','p','P'].includes(e.key)) { e.preventDefault(); return false; }
-  if (e.ctrlKey && (e.key === 'a' || e.key === 'A')) { e.preventDefault(); return false; }
+  if (e.ctrlKey && ['u','U','s','S','p','P','a','A'].includes(e.key)) { e.preventDefault(); return false; }
 });
-
-
 </script>
 
 </body>

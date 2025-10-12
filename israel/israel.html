@@ -10,7 +10,10 @@
     font-family: Arial, Helvetica, sans-serif;
     color: #fff;
     /* 🌈 Dégradé uniforme sur toute la page */
-    background: linear-gradient(135deg, #0038a8, #00a8ff);
+  background: linear-gradient(135deg,
+    #9fc5ff 0%,   /* Bleu pastel clair */
+    #cce0ff 100%  /* Bleu ciel pastel */
+  );
     background-attachment: fixed;
     background-size: cover;
   }
@@ -95,6 +98,11 @@
     background: #00a8ff;
     color: #0038a8;
     transform: scale(1.1);
+  }
+
+    @media (max-width: 768px) {
+    #pdf-container { margin: 24px 12px; }
+    header { padding: 10px 12px; }
   }
 </style>
 </head>
