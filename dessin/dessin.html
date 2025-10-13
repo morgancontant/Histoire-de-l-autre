@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture Image</title>
+<title>Dessin</title>
 <style>
 html, body {
   height: 100%;
@@ -13,10 +13,8 @@ html, body {
     rgba(0, 150, 200, 0.45) 0%,
     rgba(240, 240, 120, 0.35) 50%,
     rgba(0, 200, 100, 0.45) 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
   color: #fff;
+  overflow-x: hidden;
 }
 
 header {
@@ -35,27 +33,45 @@ header h1 {
   text-transform: uppercase;
 }
 
-#image-container {
-  padding: 40px 18px;
-  max-width: 1200px;
-  margin: 0 auto;
+#content-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* image en haut, PDF en dessous */
   align-items: center;
-  gap: 40px; /* espace entre les deux images */
-  flex-wrap: wrap; /* permet le passage à la ligne sur petits écrans */
+  gap: 40px;
+  padding: 40px 18px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .image {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  max-width: 45%; /* les deux tiennent côte à côte */
+  width: 60%;
   height: auto;
+  object-fit: cover;
   border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   transition: transform 0.4s ease;
 }
 
 .image:hover {
   transform: scale(1.03);
+}
+
+#pdf-container {
+  width: 80%; /* PDF plus large */
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  border-radius: 8px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 button {
@@ -85,44 +101,61 @@ button:hover {
   <button id="back-btn">⬅ Retour</button>
 </header>
 
-<main id="image-container"></main>
+<main id="content-container">
+  <!-- Image en haut -->
+  <img src="image0.png" class="image" alt="Illustration" draggable="false">
 
+  <!-- Conteneur PDF en dessous -->
+  <div id="pdf-container"></div>
+</main>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-const container = document.getElementById('image-container');
+const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+const PDF_URL = 'texte.pdf';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const container = document.getElementById('pdf-container');
 const backBtn = document.getElementById('back-btn');
 
-// Liste des images à afficher côte à côte
-const images = ['Dessin.jpg', 'image0.png'];
+let pdfDoc = null;
+let canvas = null;
+let ctx = null;
+const currentScale = isMobile ? 1.5 : 3.5; // PDF plus grand
 
-images.forEach(src => {
-  const img = document.createElement('img');
-  img.src = src;
-  img.classList.add('image');
-  img.setAttribute('draggable', 'false');
-  img.addEventListener('dragstart', e => e.preventDefault());
-  img.addEventListener('contextmenu', e => e.preventDefault());
-  img.addEventListener('mousedown', e => { if (e.button === 2) e.preventDefault(); });
-  container.appendChild(img);
-  // Réduire une image spécifique
-  if (src === 'Dessin.jpg') {
-    img.style.maxWidth = '32%'; // Taille personnalisée
+(async function loadPdf() {
+  try {
+    pdfDoc = await pdfjsLib.getDocument(PDF_URL).promise;
+    canvas = document.createElement('canvas');
+    ctx = canvas.getContext('2d');
+    container.appendChild(canvas);
+
+    const page = await pdfDoc.getPage(1);
+    const viewport = page.getViewport({ scale: currentScale });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+  } catch (err) {
+    console.error('Erreur chargement PDF:', err);
+    container.innerHTML = '<div style="color:red">Impossible de charger le PDF.</div>';
   }
+})();
 
-});
-
-// Bouton retour
+/* Bouton retour */
 backBtn.addEventListener('click', () => {
   if (history.length > 1) history.back();
   else window.location.href = '';
 });
 
-// Bloquer actions indésirables
+/* Sécurité basique */
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('dragstart', e => e.preventDefault());
 document.addEventListener('keydown', e => {
-  if (e.key === 'F12') { e.preventDefault(); return false; }
-  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) { e.preventDefault(); return false; }
-  if (e.ctrlKey && ['u','U','s','S','p','P','a','A'].includes(e.key)) { e.preventDefault(); return false; }
+  if (e.key === 'F12') e.preventDefault();
+  if (e.ctrlKey && e.shiftKey && ['I','J','C','i','j','c'].includes(e.key)) e.preventDefault();
+  if (e.ctrlKey && ['u','U','s','S','p','P','a','A'].includes(e.key)) e.preventDefault();
 });
 </script>
 
